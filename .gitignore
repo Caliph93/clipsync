@@ -1,0 +1,10 @@
+.gradle/
+local.properties
+*.iml
+/.idea/
+/build/
+app/build/
+.gradle/
+gradle-app.setting
+.gradle/
+ClipSync_for_GitHub.zip
