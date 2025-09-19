@@ -1,51 +1,32 @@
-name: Build Debug APK
+name: Android CI
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    env:
-      ANDROID_SDK_ROOT: ${{ runner.temp }}/android-sdk
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-      - name: Set up JDK 11
-        uses: actions/setup-java@v4
+      - name: Set up JDK
+        uses: actions/setup-java@v3
         with:
-          distribution: temurin
-          java-version: 11
+          distribution: 'temurin'
+          java-version: '17'
 
-      - name: Install Android command line tools
-        run: |
-          mkdir -p "$ANDROID_SDK_ROOT/cmdline-tools"
-          wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O /tmp/cmdline.zip
-          unzip -q /tmp/cmdline.zip -d "$ANDROID_SDK_ROOT/cmdline-tools"
-          if [ -d "$ANDROID_SDK_ROOT/cmdline-tools/cmdline-tools" ]; then
-            mv "$ANDROID_SDK_ROOT/cmdline-tools/cmdline-tools" "$ANDROID_SDK_ROOT/cmdline-tools/latest"
-          fi
-          export PATH="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$PATH"
-          yes | sdkmanager --sdk_root="$ANDROID_SDK_ROOT" "platform-tools" "platforms;android-33" "build-tools;33.0.2"
-          yes | sdkmanager --licenses --sdk_root="$ANDROID_SDK_ROOT"
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v2
 
-      - name: Install Gradle CLI
-        run: |
-          wget -q https://services.gradle.org/distributions/gradle-7.5.1-bin.zip -O /tmp/gradle.zip
-          unzip -q /tmp/gradle.zip -d $HOME/gradle
+      - name: Build APK
+        run: ./gradlew assembleDebug
 
-      - name: Build Debug APK
-        run: |
-          export PATH="$HOME/gradle/gradle-7.5.1/bin:$ANDROID_SDK_ROOT/platform-tools:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$PATH"
-          ./gradlew assembleDebug --no-daemon --stacktrace
-        env:
-          JAVA_HOME: ${{ steps.setup-java.outputs.java-home }}
-
-      - name: Upload APK artifact
-        uses: actions/upload-artifact@v4
+      - name: Upload APK
+        uses: actions/upload-artifact@v3
         with:
-          name: clip-sync-debug-apk
-          path: app/build/outputs/apk/debug/*.apk
+          name: app-debug
+          path: app/build/outputs/apk/debug/app-debug.apk
